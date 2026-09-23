@@ -2,6 +2,8 @@
 
 Sistema simples e eficiente de lista de tarefas com **backend em Python (Flask + SQLite)** com CRUD completo e **frontend integrado em HTML + CSS**.
 
+![Print do sistema](docs/screenshot.png)
+
 ## ✨ Funcionalidades
 
 - ➕ **Create:** adicionar tarefas com título, descrição, tipo e prioridade
@@ -19,6 +21,12 @@ Sistema simples e eficiente de lista de tarefas com **backend em Python (Flask +
 todo-list/
 ├── app.py              # Backend Flask + CRUD + SQLite
 ├── requirements.txt    # Dependências
+├── Procfile            # Deploy (Heroku/Render)
+├── render.yaml         # Deploy (Render)
+├── runtime.txt         # Versão do Python no deploy
+├── LICENSE             # Licença MIT
+├── docs/
+│   └── screenshot.png  # Print do sistema
 ├── templates/
 │   ├── index.html      # Página principal
 │   └── edit.html       # Página de edição
@@ -99,4 +107,21 @@ git push -u origin main
 
 ## 📝 Licença
 
-Projeto livre para estudo e uso pessoal.
+Distribuído sob a licença MIT — veja o arquivo [LICENSE](LICENSE).
+
+## ☁️ Deploy gratuito
+
+### Render (recomendado)
+1. Suba o código para o GitHub (este repo já inclui `Procfile`, `render.yaml` e `runtime.txt`).
+2. Em [render.com](https://render.com) crie um **Web Service** a partir do repositório.
+3. Build: `pip install -r requirements.txt` · Start: `gunicorn app:app`.
+4. Pronto — o banco SQLite é criado automaticamente no primeiro acesso.
+
+> Nota: no plano gratuito do Render o disco é efêmero (os dados somem a cada redeploy).
+> Para dados permanentes, troque o SQLite por PostgreSQL gratuito do próprio Render.
+
+### PythonAnywhere
+1. Crie conta em [pythonanywhere.com](https://www.pythonanywhere.com).
+2. Clone o repo, crie um virtualenv e instale `requirements.txt`.
+3. Crie um app Flask apontando o WSGI para `app.py` (variável `app`).
+4. Reload e acesse sua URL `seu-usuario.pythonanywhere.com`.
