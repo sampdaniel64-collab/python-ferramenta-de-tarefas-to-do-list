@@ -1,100 +1,99 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minha To-Do List</title>
+    <title>TODO</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        // Aplica o tema salvo antes de renderizar (evita flash)
+        try {
+            var t = localStorage.getItem('todo-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+    </script>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>✔ Minha To-Do List</h1>
-            <p class="subtitle">Atividades, pendências e objetivos em um só lugar</p>
+    <div class="hero"></div>
+
+    <main class="wrap">
+        <header class="top">
+            <h1>T O D O</h1>
+            <button id="theme-toggle" class="icon-btn" title="Alternar tema" aria-label="Alternar tema">
+                <svg class="icon-sun" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <circle cx="12" cy="12" r="4.5"/>
+                    <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/>
+                </svg>
+                <svg class="icon-moon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+                </svg>
+            </button>
         </header>
 
-        <section class="stats">
-            <div class="stat"><span class="stat-num">{{ stats.total }}</span><span>Total</span></div>
-            <div class="stat warn"><span class="stat-num">{{ stats.pendentes }}</span><span>Pendentes</span></div>
-            <div class="stat ok"><span class="stat-num">{{ stats.concluidas }}</span><span>Concluídas</span></div>
-        </section>
-
-        <section class="card">
-            <h2>Nova tarefa</h2>
-            <form action="{{ url_for('adicionar') }}" method="POST" class="form-nova">
-                <input type="text" name="titulo" placeholder="Ex: Estudar Python, pagar conta..." required maxlength="120">
-                <input type="text" name="descricao" placeholder="Descrição (opcional)" maxlength="300">
-                <div class="form-row">
-                    <select name="tipo" title="Tipo">
-                        <option value="atividade">Atividade</option>
-                        <option value="pendencia">Pendência</option>
-                        <option value="objetivo">Objetivo</option>
-                    </select>
-                    <select name="prioridade" title="Prioridade">
-                        <option value="baixa">Baixa</option>
-                        <option value="media" selected>Média</option>
-                        <option value="alta">Alta</option>
-                    </select>
-                    <button type="submit" class="btn primary">+ Adicionar</button>
-                </div>
+        <section class="card create">
+            <form action="{{ url_for('adicionar') }}" method="POST" class="create-form">
+                <span class="circle ghost"></span>
+                <input type="text" name="titulo" placeholder="Criar uma nova tarefa..." required maxlength="120" autocomplete="off">
+                <select name="tipo" title="Tipo">
+                    <option value="atividade">Atividade</option>
+                    <option value="pendencia">Pendência</option>
+                    <option value="objetivo">Objetivo</option>
+                </select>
+                <select name="prioridade" title="Prioridade">
+                    <option value="baixa">Baixa</option>
+                    <option value="media" selected>Média</option>
+                    <option value="alta">Alta</option>
+                </select>
             </form>
         </section>
 
-        <section class="card">
-            <h2>Minhas tarefas</h2>
-            <form method="GET" action="{{ url_for('index') }}" class="filtros">
-                <select name="filtro" onchange="this.form.submit()">
-                    <option value="todas" {% if filtro=='todas' %}selected{% endif %}>Todas</option>
-                    <option value="pendentes" {% if filtro=='pendentes' %}selected{% endif %}>Pendentes</option>
-                    <option value="concluidas" {% if filtro=='concluidas' %}selected{% endif %}>Concluídas</option>
-                </select>
-                <select name="tipo" onchange="this.form.submit()">
-                    <option value="todos" {% if tipo=='todos' %}selected{% endif %}>Todos os tipos</option>
-                    <option value="atividade" {% if tipo=='atividade' %}selected{% endif %}>Atividades</option>
-                    <option value="pendencia" {% if tipo=='pendencia' %}selected{% endif %}>Pendências</option>
-                    <option value="objetivo" {% if tipo=='objetivo' %}selected{% endif %}>Objetivos</option>
-                </select>
-                <input type="text" name="busca" placeholder="Buscar..." value="{{ busca }}">
-                <button type="submit" class="btn">Filtrar</button>
-                {% if filtro != 'todas' or tipo != 'todos' or busca %}
-                <a href="{{ url_for('index') }}" class="btn link">Limpar</a>
-                {% endif %}
-            </form>
-
+        <section class="card list-card">
             {% if tarefas %}
-            <ul class="lista">
+            <ul id="todo-list" class="todo-list">
                 {% for t in tarefas %}
-                <li class="item {% if t['concluida'] %}done{% endif %} pri-{{ t['prioridade'] }}">
-                    <form action="{{ url_for('concluir', tarefa_id=t['id']) }}" method="POST" class="check-form">
-                        <button type="submit" class="check" title="Marcar/desmarcar">
-                            {% if t['concluida'] %}✔{% endif %}
+                <li class="todo {% if t['concluida'] %}completed{% endif %} pri-{{ t['prioridade'] }}" draggable="true" data-id="{{ t['id'] }}">
+                    <form action="{{ url_for('concluir', tarefa_id=t['id']) }}" method="POST">
+                        <button type="submit" class="circle check" title="Marcar/desmarcar" aria-label="Marcar tarefa">
+                            {% if t['concluida'] %}
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 6.5l3 3 6-7"/></svg>
+                            {% endif %}
                         </button>
                     </form>
-                    <div class="info">
-                        <strong class="titulo">{{ t['titulo'] }}</strong>
-                        {% if t['descricao'] %}<p class="desc">{{ t['descricao'] }}</p>{% endif %}
-                        <div class="tags">
-                            <span class="tag tipo-{{ t['tipo'] }}">{{ t['tipo'] }}</span>
-                            <span class="tag">{{ t['prioridade'] }}</span>
-                        </div>
+                    <div class="todo-body">
+                        <span class="todo-text">{{ t['titulo'] }}</span>
+                        <span class="todo-meta">
+                            <span class="pill tipo-{{ t['tipo'] }}">{{ t['tipo'] }}</span>
+                            <span class="dot pri-{{ t['prioridade'] }}" title="Prioridade {{ t['prioridade'] }}"></span>
+                            {% if t['descricao'] %}<span class="desc">{{ t['descricao'] }}</span>{% endif %}
+                            <a class="edit-link" href="{{ url_for('editar', tarefa_id=t['id']) }}" title="Editar">✎</a>
+                        </span>
                     </div>
-                    <div class="acoes">
-                        <a href="{{ url_for('editar', tarefa_id=t['id']) }}" class="btn small">Editar</a>
-                        <form action="{{ url_for('excluir', tarefa_id=t['id']) }}" method="POST" onsubmit="return confirm('Excluir esta tarefa?');">
-                            <button type="submit" class="btn small danger">Excluir</button>
-                        </form>
-                    </div>
+                    <form action="{{ url_for('excluir', tarefa_id=t['id']) }}" method="POST" onsubmit="return confirm('Excluir esta tarefa?');">
+                        <button type="submit" class="remove" title="Excluir" aria-label="Excluir tarefa">✕</button>
+                    </form>
                 </li>
                 {% endfor %}
             </ul>
             {% else %}
-            <p class="vazio">Nenhuma tarefa encontrada. Adicione a primeira acima! 🚀</p>
+            <p class="empty">Nenhuma tarefa por aqui. Crie a primeira acima! 🚀</p>
             {% endif %}
+
+            <footer class="list-footer">
+                <span class="left">{{ stats.pendentes }} {% if stats.pendentes == 1 %}item restante{% else %}itens restantes{% endif %}</span>
+                <nav class="filters">
+                    <a href="{{ url_for('index', filtro='todas') }}" class="{% if filtro == 'todas' %}active{% endif %}">Todas</a>
+                    <a href="{{ url_for('index', filtro='pendentes') }}" class="{% if filtro == 'pendentes' %}active{% endif %}">Ativas</a>
+                    <a href="{{ url_for('index', filtro='concluidas') }}" class="{% if filtro == 'concluidas' %}active{% endif %}">Concluídas</a>
+                </nav>
+                <form action="{{ url_for('limpar_concluidas') }}" method="POST" onsubmit="return confirm('Remover todas as concluídas?');">
+                    <button type="submit" class="clear">Limpar concluídas</button>
+                </form>
+            </footer>
         </section>
 
-        <footer>
-            <p>Feito em Python + Flask + SQLite &bull; API disponível em <code>/api/tarefas</code></p>
-        </footer>
-    </div>
+        <p class="hint">Arraste e solte para reordenar a lista</p>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

@@ -13,6 +13,9 @@ Sistema simples e eficiente de lista de tarefas com **backend em Python (Flask +
 - 🏷️ Tipos: `atividade`, `pendencia`, `objetivo`
 - ⚡ Prioridades: `baixa`, `media`, `alta` (com cor na borda)
 - 📊 Dashboard com contadores (total / pendentes / concluídas)
+- 🌙 Tema escuro / claro com alternância no cabeçalho
+- ↕️ Arrastar e soltar para reordenar (ordem salva no banco)
+- 🧹 Limpar concluídas com um clique
 - 🔌 API REST JSON em `/api/tarefas` (GET, POST, PUT, DELETE)
 
 ## 🗂️ Estrutura do projeto
@@ -31,7 +34,8 @@ todo-list/
 │   ├── index.html      # Página principal
 │   └── edit.html       # Página de edição
 ├── static/
-│   └── style.css       # Estilos (frontend)
+│   ├── style.css       # Estilos (temas escuro/claro, responsivo)
+│   └── script.js       # Toggle de tema + drag-and-drop
 ├── .gitignore
 └── README.md
 ```

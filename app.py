@@ -40,11 +40,21 @@ def init_db():
             prioridade TEXT NOT NULL DEFAULT 'media'
                 CHECK (prioridade IN ('baixa', 'media', 'alta')),
             concluida INTEGER NOT NULL DEFAULT 0,
-            criado_em TEXT NOT NULL
+            criado_em TEXT NOT NULL,
+            posicao INTEGER NOT NULL DEFAULT 0
         )
     """)
+    # Migracao: bancos criados antes da coluna posicao
+    cols = [r[1] for r in db.execute("PRAGMA table_info(tarefas)").fetchall()]
+    if "posicao" not in cols:
+        db.execute("ALTER TABLE tarefas ADD COLUMN posicao INTEGER NOT NULL DEFAULT 0")
+    db.execute("UPDATE tarefas SET posicao = id WHERE posicao = 0")
     db.commit()
     db.close()
+
+def proxima_posicao(db):
+    row = db.execute("SELECT COALESCE(MAX(posicao), 0) FROM tarefas").fetchone()
+    return (row[0] or 0) + 1
 
 # ---------------- Helpers ----------------
 
@@ -80,7 +90,7 @@ def index():
         query += " AND (titulo LIKE ? OR descricao LIKE ?)"
         params.extend([f"%{busca}%", f"%{busca}%"])
 
-    query += " ORDER BY concluida ASC, criado_em DESC"
+    query += " ORDER BY posicao ASC, id ASC"
     tarefas = db.execute(query, params).fetchall()
     stats = contar_estatisticas(db)
 
@@ -110,9 +120,10 @@ def adicionar():
 
     db = get_db()
     db.execute(
-        "INSERT INTO tarefas (titulo, descricao, tipo, prioridade, concluida, criado_em)"
-        " VALUES (?, ?, ?, ?, 0, ?)",
-        (titulo, descricao, tipo, prioridade, datetime.now().isoformat(timespec="seconds")),
+        "INSERT INTO tarefas (titulo, descricao, tipo, prioridade, concluida, criado_em, posicao)"
+        " VALUES (?, ?, ?, ?, 0, ?, ?)",
+        (titulo, descricao, tipo, prioridade,
+         datetime.now().isoformat(timespec="seconds"), proxima_posicao(db)),
     )
     db.commit()
     return redirect(url_for("index"))
@@ -164,6 +175,25 @@ def excluir(tarefa_id):
     db.commit()
     return redirect(url_for("index"))
 
+@app.route("/limpar-concluidas", methods=["POST"])
+def limpar_concluidas():
+    """DELETE - Remove todas as tarefas concluidas (Clear Completed)."""
+    db = get_db()
+    db.execute("DELETE FROM tarefas WHERE concluida = 1")
+    db.commit()
+    return redirect(url_for("index"))
+
+@app.route("/reordenar", methods=["POST"])
+def reordenar():
+    """UPDATE - Salva nova ordem das tarefas (drag and drop)."""
+    dados = request.get_json(force=True)
+    ordem = dados.get("ordem", [])
+    db = get_db()
+    for pos, tarefa_id in enumerate(ordem, start=1):
+        db.execute("UPDATE tarefas SET posicao = ? WHERE id = ?", (pos, int(tarefa_id)))
+    db.commit()
+    return jsonify({"ok": True})
+
 # ---------------- API JSON (CRUD REST) ----------------
 
 @app.route("/api/tarefas", methods=["GET"])
@@ -186,10 +216,10 @@ def api_criar():
         prioridade = "media"
     db = get_db()
     cur = db.execute(
-        "INSERT INTO tarefas (titulo, descricao, tipo, prioridade, concluida, criado_em)"
-        " VALUES (?, ?, ?, ?, 0, ?)",
+        "INSERT INTO tarefas (titulo, descricao, tipo, prioridade, concluida, criado_em, posicao)"
+        " VALUES (?, ?, ?, ?, 0, ?, ?)",
         (titulo, dados.get("descricao", ""), tipo, prioridade,
-         datetime.now().isoformat(timespec="seconds")),
+         datetime.now().isoformat(timespec="seconds"), proxima_posicao(db)),
     )
     db.commit()
     nova = db.execute("SELECT * FROM tarefas WHERE id = ?", (cur.lastrowid,)).fetchone()

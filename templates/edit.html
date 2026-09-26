@@ -1,23 +1,34 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar tarefa</title>
+    <title>Editar • TODO</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        try {
+            var t = localStorage.getItem('todo-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+    </script>
 </head>
 <body>
-    <div class="container narrow">
-        <header>
-            <h1>✏️ Editar tarefa</h1>
+    <div class="hero slim"></div>
+
+    <main class="wrap">
+        <header class="top">
+            <h1>T O D O</h1>
+            <a href="{{ url_for('index') }}" class="icon-btn back" title="Voltar">←</a>
         </header>
-        <section class="card">
-            <form action="{{ url_for('editar', tarefa_id=tarefa['id']) }}" method="POST" class="form-nova">
+
+        <section class="card edit-card">
+            <h2>Editar tarefa</h2>
+            <form action="{{ url_for('editar', tarefa_id=tarefa['id']) }}" method="POST" class="edit-form">
                 <label>Título</label>
                 <input type="text" name="titulo" value="{{ tarefa['titulo'] }}" required maxlength="120">
                 <label>Descrição</label>
-                <input type="text" name="descricao" value="{{ tarefa['descricao'] or '' }}" maxlength="300">
-                <div class="form-row">
+                <input type="text" name="descricao" value="{{ tarefa['descricao'] or '' }}" maxlength="300" placeholder="Descrição (opcional)">
+                <div class="edit-row">
                     <div>
                         <label>Tipo</label>
                         <select name="tipo">
@@ -35,12 +46,14 @@
                         </select>
                     </div>
                 </div>
-                <div class="form-row">
-                    <button type="submit" class="btn primary">Salvar</button>
-                    <a href="{{ url_for('index') }}" class="btn link">Cancelar</a>
+                <div class="edit-actions">
+                    <button type="submit" class="btn-save">Salvar</button>
+                    <a href="{{ url_for('index') }}" class="btn-cancel">Cancelar</a>
                 </div>
             </form>
         </section>
-    </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
